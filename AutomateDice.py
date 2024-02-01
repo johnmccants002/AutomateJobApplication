@@ -1,5 +1,10 @@
 from playwright.sync_api import sync_playwright
 import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def login(page, email, password):
     page.goto("https://www.dice.com/dashboard/login")
@@ -16,7 +21,7 @@ def login(page, email, password):
     time.sleep(3)
 
 def perform_job_search(page, search_keywords):
-    page.wait_for_url("home-feed")
+    page.wait_for_url("https://www.dice.com/home/home-feed")
     page.goto("https://www.dice.com/jobs")
     page.wait_for_load_state("load")
     time.sleep(3)
@@ -29,10 +34,10 @@ def perform_job_search(page, search_keywords):
     page.wait_for_load_state("load")
     time.sleep(3)
 
-    page.wait_for_selector('//button[@aria-label="Filter Search Results by Third Party"]')
-    page.click('//button[@aria-label="Filter Search Results by Third Party"]')
-    page.wait_for_load_state("load")
-    time.sleep(3)
+    # page.wait_for_selector('//button[@aria-label="Filter Search Results by Third Party"]')
+    # page.click('//button[@aria-label="Filter Search Results by Third Party"]')
+    # page.wait_for_load_state("load")
+    # time.sleep(3)
 
     page.wait_for_selector('//button[@aria-label="Filter Search Results by Easy Apply"]')
     page.click('//button[@aria-label="Filter Search Results by Easy Apply"]')
@@ -105,7 +110,10 @@ def write_job_titles_to_file(page, job_ids, url):
             except Exception as e:
                 print("Error processing job id:", job_id)
                 print("Error details:", str(e))
-                continue
+            finally:
+                new_page.close()
+        
+
 
 def evaluate_and_apply(page, val):
     js_script = """
@@ -139,6 +147,8 @@ def evaluate_and_apply(page, val):
 
     if returned_value == 1:
         apply_and_upload_resume(page, val)
+    else:
+        page.close()
 
 def apply_and_upload_resume(page, val):
     page.wait_for_load_state("load")
@@ -262,9 +272,9 @@ def logout_and_close(page, browser):
 
 def main():
     print("started")
-    email = "xyz@gmail.com"
-    password = "abc"
-    search_keywords = '("kw1" OR "KW2") AND "Kw3"'  # Keywords for the search
+    email = os.getenv('EMAIL')
+    password = os.getenv('PASSWORD')
+    search_keywords = '"Entry Level" AND "Remote"'  # Keywords for the search
     custom_user_agent = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.288 Mobile Safari/537.36"
 
     with sync_playwright() as p:
